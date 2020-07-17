@@ -1,0 +1,22 @@
+sudo: required
+language: crystal
+
+services:
+  - docker
+
+before_install:
+  # Add rethinkdb 2.4
+  - docker run --net="host" -p "29015:29015" -p "28015:28015" -d rethinkdb:2.4
+
+install:
+  - shards install
+
+before_script:
+
+script:
+  # Specs
+  - crystal spec --no-debug -v --error-trace
+  # Linter
+  - bin/ameba
+  # Formatter
+  - crystal tool format --check
