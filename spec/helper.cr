@@ -1,2 +1,2 @@
 require "spec"
-require "../src/resource"
+require "../src/placeos-resource"
