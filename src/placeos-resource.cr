@@ -1,4 +1,5 @@
 require "deque"
+require "log_helper"
 require "promise"
 require "rethinkdb-orm"
 require "simple_retry"
@@ -23,8 +24,8 @@ abstract class PlaceOS::Resource(T)
     end
   end
 
-  # TODO: Add when crystal supports generic aliasing
-  # alias Event(T) = NamedTuple(resource: T, action: Action)
+  # TODO: Uncomment when crystal supports
+  # alias Event = NamedTuple(action: Action, resource: T)
 
   # Outcome of processing a resource
   enum Result
@@ -43,23 +44,23 @@ abstract class PlaceOS::Resource(T)
 
   # Buffer of recently processed elements
   # NOTE: rw lock?
-  getter processed : Deque(NamedTuple(resource: T, action: Action))
-  private getter event_channel : Channel(NamedTuple(resource: T, action: Action))
+  getter processed : Deque(NamedTuple(action: Action, resource: T))
+  private getter event_channel : Channel(NamedTuple(action: Action, resource: T))
 
-  abstract def process_resource(event : NamedTuple(resource: T, action: Action)) : Result
+  abstract def process_resource(action : Action, resource : T) : Result
 
   def initialize(
     @processed_buffer_size : Int32 = 64,
     @channel_buffer_size : Int32 = 64
   )
-    @event_channel = Channel(NamedTuple(resource: T, action: Action)).new(channel_buffer_size)
-    @processed = Deque(NamedTuple(resource: T, action: Action)).new(processed_buffer_size)
+    @event_channel = Channel(NamedTuple(action: Action, resource: T)).new(channel_buffer_size)
+    @processed = Deque(NamedTuple(action: Action, resource: T)).new(processed_buffer_size)
   end
 
   def start : self
     processed.clear
     errors.clear
-    @event_channel = Channel(NamedTuple(resource: T, action: Action)).new(channel_buffer_size) if event_channel.closed?
+    @event_channel = Channel(NamedTuple(action: Action, resource: T)).new(channel_buffer_size) if event_channel.closed?
 
     # Listen for changes on the resource table
     spawn(same_thread: true) { watch_resources }
@@ -79,7 +80,7 @@ abstract class PlaceOS::Resource(T)
     self
   end
 
-  private def consume_event : {resource: T, action: Action}
+  private def consume_event : NamedTuple(action: Action, resource: T)
     event_channel.receive
   end
 
@@ -88,10 +89,10 @@ abstract class PlaceOS::Resource(T)
   private def load_resources : UInt64
     count = 0_u64
     waiting = [] of Promise::DeferredPromise(Nil)
-    T.all(runopts: {"read_mode" => "majority"}).in_groups_of(channel_buffer_size).each do |resources|
+    T.all.in_groups_of(channel_buffer_size).each do |resources|
       resources.each do |resource|
         next unless resource
-        event = {resource: resource, action: Action::Created}
+        event = {action: Action::Created, resource: resource}
         waiting << Promise.defer(same_thread: true) do
           count += 1
           _process_event(event)
@@ -107,22 +108,24 @@ abstract class PlaceOS::Resource(T)
   # Listen to changes on the resource table
   #
   private def watch_resources
-    SimpleRetry.try_to do
+    SimpleRetry.try_to(base_interval: 50.milliseconds, max_interval: 1.seconds) do
       begin
         T.changes.each do |change|
           break if event_channel.closed?
 
+          action = change[:event]
+          resource = change[:value]
+
           event = {
-            action:   change[:event],
-            resource: change[:value],
+            action:   action,
+            resource: resource,
           }
 
-          Log.debug { {message: "resource event", type: T.name, action: event[:action].to_s, id: event[:resource].id} }
+          Log.debug { {message: "resource event", type: T.name, action: action.to_s, id: resource.id} }
           event_channel.send(event)
         end
-      rescue Channel::ClosedError
       rescue e
-        Log.error(exception: e) { "error while watching for #{T.name} changes" }
+        Log.error { {message: "while watching resources", type: T.name, error: e.to_s} }
         raise e
       end
     end
@@ -144,7 +147,7 @@ abstract class PlaceOS::Resource(T)
 
   # Process the event, place into the processed buffer
   #
-  private def _process_event(event : NamedTuple(resource: T, action: Action)) : Nil
+  private def _process_event(event : NamedTuple(action: Action, resource: T)) : Nil
     Log.context.set({
       resource_type:    T.name,
       resource_handler: self.class.name,
@@ -153,13 +156,13 @@ abstract class PlaceOS::Resource(T)
 
     Log.debug { "processing resource event" }
     begin
-      case process_resource(event)
-      when Result::Success
+      case process_resource(**event)
+      in Result::Success
         processed.push(event)
         processed.shift if processed.size > @processed_buffer_size
         Log.info { "processed resource event" }
-      when Result::Skipped then Log.info { "resource processing skipped" }
-      when Result::Error   then Log.warn { {message: "resource processing failed", resource: event[:resource].to_json} }
+      in Result::Skipped then Log.info { "resource processing skipped" }
+      in Result::Error   then Log.warn { {message: "resource processing failed", resource: event[:resource].to_json} }
       end
     rescue e : ProcessingError
       Log.warn(exception: e) { {message: "resource processing failed", error: "#{e.name} failed with #{e.message}"} }
