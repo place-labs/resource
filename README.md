@@ -1,5 +1,7 @@
 # PlaceOS Resource
 
+[![Build Status](https://travis-ci.org/place-labs/resource.svg?branch=master)](https://travis-ci.org/place-labs/resource)
+
 Abstraction over RethinkORM changefeeds
 
 ## Contributing
