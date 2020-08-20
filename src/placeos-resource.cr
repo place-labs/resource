@@ -70,6 +70,7 @@ abstract class PlaceOS::Resource(T)
 
     # Begin background processing
     spawn(same_thread: true) { watch_processing }
+
     Fiber.yield
 
     self
@@ -89,7 +90,7 @@ abstract class PlaceOS::Resource(T)
   private def load_resources : UInt64
     count = 0_u64
     waiting = [] of Promise::DeferredPromise(Nil)
-    T.all.in_groups_of(channel_buffer_size).each do |resources|
+    T.all.in_groups_of(channel_buffer_size, reuse: true).each do |resources|
       resources.each do |resource|
         next unless resource
         event = {action: Action::Created, resource: resource}
@@ -137,6 +138,7 @@ abstract class PlaceOS::Resource(T)
     loop do
       event = consume_event
       spawn(same_thread: true) { _process_event(event) }
+      Fiber.yield
     end
   rescue e
     unless e.is_a?(Channel::ClosedError)
