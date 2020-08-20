@@ -102,13 +102,19 @@ abstract class PlaceOS::Resource(T)
       Promise.all(waiting).get
       waiting.clear
     end
-    Log.info { "loaded #{count} #{T} resources" }
+
+    Log.info { {message: "loaded #{count} #{T} resources", type: T.name, handler: self.class.name} }
     count
   end
 
   # Listen to changes on the resource table
   #
   private def watch_resources
+    Log.context.set({
+      type:    T.name,
+      handler: self.class.name,
+    })
+
     SimpleRetry.try_to(base_interval: 50.milliseconds, max_interval: 1.seconds) do
       begin
         T.changes.each do |change|
@@ -122,11 +128,11 @@ abstract class PlaceOS::Resource(T)
             resource: resource,
           }
 
-          Log.debug { {message: "resource event", type: T.name, action: action.to_s, id: resource.id} }
+          Log.debug { {message: "resource event", action: action.to_s, id: resource.id} }
           event_channel.send(event)
         end
       rescue e
-        Log.error { {message: "while watching resources", type: T.name, error: e.to_s} }
+        Log.error { {message: "while watching resources", error: e.to_s} }
         raise e
       end
     end
@@ -142,7 +148,7 @@ abstract class PlaceOS::Resource(T)
     end
   rescue e
     unless e.is_a?(Channel::ClosedError)
-      Log.error(exception: e) { {message: "error while consuming resource queue"} }
+      Log.error(exception: e) { {message: "error while consuming resource event queue"} }
       watch_processing
     end
   end
@@ -151,29 +157,30 @@ abstract class PlaceOS::Resource(T)
   #
   private def _process_event(event : NamedTuple(action: Action, resource: T)) : Nil
     Log.context.set({
-      resource_type:    T.name,
-      resource_handler: self.class.name,
-      resource_action:  event[:action].to_s,
+      type:    T.name,
+      handler: self.class.name,
+      action:  event[:action].to_s,
+      id:      event[:resource].id,
     })
 
-    Log.debug { "processing resource event" }
+    Log.debug { "processing event" }
     begin
       case process_resource(**event)
       in Result::Success
         processed.push(event)
         processed.shift if processed.size > @processed_buffer_size
-        Log.info { "processed resource event" }
-      in Result::Skipped then Log.info { "resource processing skipped" }
-      in Result::Error   then Log.warn { {message: "resource processing failed", resource: event[:resource].to_json} }
+        Log.info { "processed event" }
+      in Result::Skipped then Log.info { "processing skipped" }
+      in Result::Error   then Log.warn { {message: "processing failed", resource: event[:resource].to_json} }
       end
     rescue e : ProcessingError
-      Log.warn(exception: e) { {message: "resource processing failed", error: "#{e.name} failed with #{e.message}"} }
+      Log.warn(exception: e) { {message: "processing failed", error: "#{e.name}: #{e.message}"} }
       while errors.size >= error_buffer_size
         errors.shift?
       end
       errors << e.to_error
     end
   rescue e
-    Log.error(exception: e) { {message: "while processing resource event", resource: event[:resource].inspect} }
+    Log.error(exception: e) { {message: "unexpected error while processing event", resource: event[:resource].inspect} }
   end
 end
