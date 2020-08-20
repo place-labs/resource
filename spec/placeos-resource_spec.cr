@@ -14,7 +14,7 @@ module PlaceOS
 
       models.each &.destroy
 
-      Fiber.yield
+      sleep 0.1
 
       processor.deletes.should be_empty
     end
@@ -29,7 +29,7 @@ module PlaceOS
       update_name = UUID.random.to_s
       model = Basic.new(name: create_name).save!
 
-      Fiber.yield
+      sleep 0.1
 
       processor.creates.size.should eq 1
       processor.updates.should be_empty
@@ -40,7 +40,7 @@ module PlaceOS
       model.name = update_name
       model.save!
 
-      Fiber.yield
+      sleep 0.1
 
       processor.creates.size.should eq 1
       processor.updates.size.should eq 1
@@ -50,7 +50,7 @@ module PlaceOS
 
       model.destroy
 
-      Fiber.yield
+      sleep 0.1
 
       processor.creates.size.should eq 1
       processor.updates.size.should eq 1
@@ -86,7 +86,7 @@ module PlaceOS
       model.name = update_name
       model.save!
 
-      Fiber.yield
+      sleep 0.1
 
       processor.updates.size.should eq 1
       processor.stop
