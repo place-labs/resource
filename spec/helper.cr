@@ -20,13 +20,10 @@ class Processor < PlaceOS::Resource(Basic)
 
   def process_resource(action : PlaceOS::Resource::Action, resource : Basic) : PlaceOS::Resource::Result
     case action
-    in PlaceOS::Resource::Action::Created
-      creates << resource.name
-    in PlaceOS::Resource::Action::Updated
-      updates << resource.name
-    in PlaceOS::Resource::Action::Deleted
-      deletes << resource.name
-    end
+    in .created? then creates
+    in .updated? then updates
+    in .deleted? then deletes
+    end << resource.name
 
     PlaceOS::Resource::Result::Success
   end

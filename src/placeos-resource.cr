@@ -24,7 +24,7 @@ abstract class PlaceOS::Resource(T)
     end
   end
 
-  # TODO: Uncomment when crystal supports
+  # TODO: Uncomment when crystal supports generic aliases
   # alias Event = NamedTuple(action: Action, resource: T)
 
   # Outcome of processing a resource
@@ -115,7 +115,7 @@ abstract class PlaceOS::Resource(T)
       handler: self.class.name,
     })
 
-    SimpleRetry.try_to(base_interval: 50.milliseconds, max_interval: 1.seconds) do
+    SimpleRetry.try_to(base_interval: 1.milliseconds, max_interval: 1.seconds) do
       begin
         T.changes.each do |change|
           break if event_channel.closed?
@@ -132,7 +132,7 @@ abstract class PlaceOS::Resource(T)
           event_channel.send(event)
         end
       rescue e
-        Log.error { {message: "while watching resources", error: e.to_s} }
+        Log.error { {message: "while watching resources", error: e.to_s} } unless e.is_a?(Channel::ClosedError)
         raise e
       end
     end
@@ -166,12 +166,12 @@ abstract class PlaceOS::Resource(T)
     Log.debug { "processing event" }
     begin
       case process_resource(**event)
-      in Result::Success
+      in .success?
         processed.push(event)
         processed.shift if processed.size > @processed_buffer_size
         Log.info { "processed event" }
-      in Result::Skipped then Log.info { "processing skipped" }
-      in Result::Error   then Log.warn { {message: "processing failed", resource: event[:resource].to_json} }
+      in .skipped? then Log.info { "processing skipped" }
+      in .error?   then Log.warn { {message: "processing failed", resource: event[:resource].to_json} }
       end
     rescue e : ProcessingError
       Log.warn(exception: e) { {message: "processing failed", error: "#{e.name}: #{e.message}"} }

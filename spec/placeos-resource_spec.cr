@@ -14,7 +14,7 @@ module PlaceOS
 
       models.each &.destroy
 
-      sleep 0.1
+      sleep 5.milliseconds
 
       processor.deletes.should be_empty
     end
@@ -29,7 +29,7 @@ module PlaceOS
       update_name = UUID.random.to_s
       model = Basic.new(name: create_name).save!
 
-      sleep 0.1
+      sleep 5.milliseconds
 
       processor.creates.size.should eq 1
       processor.updates.should be_empty
@@ -40,7 +40,7 @@ module PlaceOS
       model.name = update_name
       model.save!
 
-      sleep 0.1
+      sleep 5.milliseconds
 
       processor.creates.size.should eq 1
       processor.updates.size.should eq 1
@@ -50,7 +50,7 @@ module PlaceOS
 
       model.destroy
 
-      sleep 0.1
+      sleep 5.milliseconds
 
       processor.creates.size.should eq 1
       processor.updates.size.should eq 1
@@ -69,10 +69,7 @@ module PlaceOS
 
       processor.creates.size.should eq 1
 
-      begin
-        RethinkORM::Connection.db.@sock.close
-      rescue
-      end
+      RethinkORM::Connection.db.@sock.close rescue nil
 
       # Retry until connection is up again
       SimpleRetry.try_to do
@@ -83,10 +80,12 @@ module PlaceOS
         end
       end
 
+      sleep 5.milliseconds
+
       model.name = update_name
       model.save!
 
-      sleep 0.1
+      sleep 1.milliseconds
 
       processor.updates.size.should eq 1
       processor.stop
