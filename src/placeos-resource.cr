@@ -89,7 +89,7 @@ abstract class PlaceOS::Resource(T)
   #
   private def load_resources : UInt64
     count = 0_u64
-    waiting = [] of Promise::DeferredPromise(Nil)
+    waiting = Array(Promise::DeferredPromise(Nil)).new(channel_buffer_size)
     T.all.in_groups_of(channel_buffer_size, reuse: true).each do |resources|
       resources.each do |resource|
         next unless resource
