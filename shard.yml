@@ -1,6 +1,6 @@
 name: placeos-resource
-version: 1.0.7
-crystal: ~> 0.35
+version: 1.1.0
+crystal: ~> 1.0
 
 dependencies:
   # Tuple based logs
@@ -16,7 +16,7 @@ dependencies:
   # ORM for RethinkDB built on active-model
   rethinkdb-orm:
     github: spider-gazelle/rethinkdb-orm
-    version: ~> 3
+    version: ~> 4
 
   # Retriable blocks
   simple_retry:
@@ -27,11 +27,14 @@ development_dependencies:
   # Log backend
   action-controller:
     github: spider-gazelle/action-controller
+    version: ">= 4"
 
   # Linter
   ameba:
     github: crystal-ameba/ameba
+    version: ">= 0.14"
 
   # Mock data
   faker:
     github: askn/faker
+    version: ">= 0.5"
