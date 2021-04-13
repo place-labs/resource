@@ -20,7 +20,7 @@ abstract class PlaceOS::Resource(T)
     end
 
     def to_error
-      {name: name || "", reason: message || cause.message || ""}
+      {name: name || "", reason: message || cause.try &.message || ""}
     end
   end
 
