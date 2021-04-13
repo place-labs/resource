@@ -15,12 +15,12 @@ abstract class PlaceOS::Resource(T)
   class ProcessingError < Exception
     getter name
 
-    def initialize(@name : String?, @message : String?)
-      super(@message)
+    def initialize(@name : String?, @message : String?, @cause : Exception? = nil)
+      super(@message, @cause)
     end
 
     def to_error
-      {name: name || "", reason: message || ""}
+      {name: name || "", reason: message || cause.message || ""}
     end
   end
 
