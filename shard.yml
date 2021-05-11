@@ -1,5 +1,5 @@
 name: placeos-resource
-version: 1.2.1
+version: 2.0.0
 crystal: ~> 1.0
 
 dependencies:
@@ -19,9 +19,9 @@ dependencies:
     version: ~> 4
 
   # Retriable blocks
-  simple_retry:
-    github: spider-gazelle/simple_retry
-    version: ~> 1
+  retriable:
+    github: sija/retriable.cr
+    version: ~> 0.2
 
 development_dependencies:
   # Log backend
