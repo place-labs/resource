@@ -72,7 +72,7 @@ module PlaceOS
       RethinkORM::Connection.db.@sock.close rescue nil
 
       # Retry until connection is up again
-      SimpleRetry.try_to do
+      Retriable.retry do
         begin
           Basic.count
         rescue
