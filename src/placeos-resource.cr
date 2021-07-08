@@ -11,20 +11,12 @@ abstract class PlaceOS::Resource(T)
 
   alias Action = RethinkORM::Changefeed::Event
 
-  struct Error
-    getter name : String, reason : String
+  record Event(T), action : Action, resource : T
 
+  record Error, name : String, reason : String do
     def initialize(name, reason)
       @name = name || ""
       @reason = reason || ""
-    end
-  end
-
-  struct Event(T)
-    getter action : Action
-    getter resource : T
-
-    def initialize(@action : Action, @resource : T)
     end
   end
 
@@ -35,7 +27,7 @@ abstract class PlaceOS::Resource(T)
       super(@message, @cause)
     end
 
-    def to_error
+    def to_error : Error
       Error.new(name, message || cause.try &.message)
     end
   end
@@ -62,12 +54,9 @@ abstract class PlaceOS::Resource(T)
 
   abstract def process_resource(action : Action, resource : T) : Result
 
-  def initialize(
-    @processed_buffer_size : Int32 = 64,
-    @channel_buffer_size : Int32 = 64
-  )
-    @event_channel = Channel(Event(T)).new(channel_buffer_size)
+  def initialize(@processed_buffer_size : Int32 = 64, @channel_buffer_size : Int32 = 64)
     @processed = Deque(Event(T)).new(processed_buffer_size)
+    @event_channel = Channel(Event(T)).new(channel_buffer_size)
   end
 
   def start : self
@@ -94,22 +83,19 @@ abstract class PlaceOS::Resource(T)
     self
   end
 
-  private def consume_event : Event(T)
-    event_channel.receive
-  end
-
   # Load all resources from the database, push into a channel
   #
-  private def load_resources : UInt64
-    count = 0_u64
+  private def load_resources : Int64
+    count = Atomic(Int64).new(0)
     waiting = Array(Promise::DeferredPromise(Nil)).new(channel_buffer_size)
     T.all.in_groups_of(channel_buffer_size, reuse: true).each do |resources|
       resources.each do |resource|
         next unless resource
         event = Event.new(action: Action::Created, resource: resource)
         waiting << Promise.defer(same_thread: true) do
-          count += 1
+          count.add(1)
           _process_event(event)
+          nil
         end
       end
       Promise.all(waiting).get
@@ -117,7 +103,7 @@ abstract class PlaceOS::Resource(T)
     end
 
     Log.info { {message: "loaded #{count} #{T} resources", type: T.name, handler: self.class.name} }
-    count
+    count.get
   end
 
   # Listen to changes on the resource table
@@ -136,8 +122,7 @@ abstract class PlaceOS::Resource(T)
           action = change[:event]
           resource = change[:value]
 
-          event = Event.new(action: action, resource: resource)
-
+          event = Event(T).new(action, resource)
           Log.debug { {message: "resource event", action: action.to_s, id: resource.id} }
           event_channel.send(event)
         end
@@ -152,13 +137,13 @@ abstract class PlaceOS::Resource(T)
   #
   private def watch_processing
     loop do
-      event = consume_event
+      event = event_channel.receive
       spawn(same_thread: true) { _process_event(event) }
       Fiber.yield
     end
   rescue e
     unless e.is_a?(Channel::ClosedError)
-      Log.error(exception: e) { {message: "error while consuming resource event queue"} }
+      Log.error(exception: e) { "error while consuming resource event queue" }
       watch_processing
     end
   end
@@ -178,7 +163,7 @@ abstract class PlaceOS::Resource(T)
       case process_resource(event.action, event.resource)
       in .success?
         processed.push(event)
-        processed.shift if processed.size > @processed_buffer_size
+        processed.shift if processed.size > processed_buffer_size
         Log.info { "processed event" }
       in .skipped? then Log.info { "processing skipped" }
       in .error?   then Log.warn { {message: "processing failed", resource: event.resource.to_json} }
@@ -191,6 +176,6 @@ abstract class PlaceOS::Resource(T)
       errors << e.to_error
     end
   rescue e
-    Log.error(exception: e) { {message: "unexpected error while processing event", resource: event.resource.inspect} }
+    Log.error(exception: e) { {message: "unexpected error while processing event", resource: event.resource.to_json} }
   end
 end
