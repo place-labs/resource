@@ -1,6 +1,6 @@
 name: placeos-resource
-version: 2.0.0
-crystal: ~> 1.0
+version: 2.0.1
+crystal: ">= 1.0.0"
 
 dependencies:
   # Tuple based logs
@@ -20,7 +20,7 @@ dependencies:
 
   # Retriable blocks
   retriable:
-    github: sija/retriable.cr
+    github: Sija/retriable.cr
     version: ~> 0.2
 
 development_dependencies:
