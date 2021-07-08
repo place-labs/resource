@@ -1,4 +1,5 @@
 require "deque"
+require "json"
 require "log_helper"
 require "promise"
 require "rethinkdb-orm"
@@ -14,6 +15,8 @@ abstract class PlaceOS::Resource(T)
   record Event(T), action : Action, resource : T
 
   record Error, name : String, reason : String do
+    include JSON::Serializable
+
     def initialize(name, reason)
       @name = name || ""
       @reason = reason || ""
