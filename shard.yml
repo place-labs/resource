@@ -1,5 +1,5 @@
 name: placeos-resource
-version: 2.0.2
+version: 2.0.3
 crystal: ">= 1.0.0"
 
 dependencies:

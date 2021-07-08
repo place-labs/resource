@@ -105,8 +105,9 @@ abstract class PlaceOS::Resource(T)
       waiting.clear
     end
 
-    Log.info { {message: "loaded #{count} #{T} resources", type: T.name, handler: self.class.name} }
-    count.get
+    total = count.get
+    Log.info { {message: "loaded #{total} #{T} resources", type: T.name, handler: self.class.name} }
+    total
   end
 
   # Listen to changes on the resource table
