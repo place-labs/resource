@@ -91,7 +91,7 @@ abstract class PlaceOS::Resource(T)
   private def load_resources : Int64
     count = Atomic(Int64).new(0)
     waiting = Array(Promise::DeferredPromise(Nil)).new(channel_buffer_size)
-    T.all.in_groups_of(channel_buffer_size, reuse: true).each do |resources|
+    T.all.in_groups_of(channel_buffer_size, reuse: true) do |resources|
       resources.each do |resource|
         next unless resource
         event = Event.new(action: Action::Created, resource: resource)
@@ -123,12 +123,8 @@ abstract class PlaceOS::Resource(T)
         T.changes.each do |change|
           break if event_channel.closed?
 
-          action = change[:event]
-          resource = change[:value]
-
-          event = Event(T).new(action, resource)
-          Log.debug { {message: "resource event", action: action.to_s, id: resource.id} }
-          event_channel.send(event)
+          Log.debug { {message: "resource event", event: change.event.to_s.downcase, id: change.value.id} }
+          event_channel.send(Event(T).new(change.event, change.value))
         end
       rescue e
         Log.error { {message: "while watching resources", error: e.to_s} } unless e.is_a?(Channel::ClosedError)
