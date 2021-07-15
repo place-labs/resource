@@ -1,5 +1,5 @@
 name: placeos-resource
-version: 2.0.3
+version: 2.0.4
 crystal: ">= 1.0.0"
 
 dependencies:
@@ -16,7 +16,7 @@ dependencies:
   # ORM for RethinkDB built on active-model
   rethinkdb-orm:
     github: spider-gazelle/rethinkdb-orm
-    version: ~> 4
+    version: ~> 5
 
   # Retriable blocks
   retriable:
