@@ -123,7 +123,7 @@ abstract class PlaceOS::Resource(T)
         T.changes.each do |change|
           break if event_channel.closed?
 
-          Log.debug { {message: "resource event", event: change.event.to_s.downcase, id: change.value.id} }
+          Log.trace { {message: "resource event", event: change.event.to_s.downcase, id: change.value.id} }
           event_channel.send(Event(T).new(change.event, change.value))
         end
       rescue e
@@ -158,13 +158,13 @@ abstract class PlaceOS::Resource(T)
       id:      event.resource.id,
     })
 
-    Log.debug { "processing event" }
+    Log.trace { "processing event" }
     begin
       case process_resource(event.action, event.resource)
       in .success?
         processed.push(event)
         processed.shift if processed.size > processed_buffer_size
-        Log.info { "processed event" }
+        Log.trace { "processed event" }
       in .skipped? then Log.info { "processing skipped" }
       in .error?   then Log.warn { {message: "processing failed", resource: event.resource.to_json} }
       end
