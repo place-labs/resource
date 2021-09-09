@@ -126,6 +126,7 @@ abstract class PlaceOS::Resource(T)
           Log.trace { {message: "resource event", event: change.event.to_s.downcase, id: change.value.id} }
           event_channel.send(Event(T).new(change.event, change.value))
         end
+        raise "Changefeed closed prematurely" unless event_channel.closed?
       rescue e
         Log.error { {message: "while watching resources", error: e.to_s} } unless e.is_a?(Channel::ClosedError)
         raise e
