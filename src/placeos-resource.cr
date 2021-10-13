@@ -55,6 +55,9 @@ abstract class PlaceOS::Resource(T)
   getter processed : Deque(Event(T))
   private getter event_channel : Channel(Event(T))
 
+  # Expose the status of whether the initial load of resources has completed.
+  getter? startup_finished : Bool = false
+
   abstract def process_resource(action : Action, resource : T) : Result
 
   def initialize(@processed_buffer_size : Int32 = 64, @channel_buffer_size : Int32 = 64)
@@ -65,6 +68,7 @@ abstract class PlaceOS::Resource(T)
   def start : self
     processed.clear
     errors.clear
+
     @event_channel = Channel(Event(T)).new(channel_buffer_size) if event_channel.closed?
 
     # Listen for changes on the resource table
@@ -76,6 +80,8 @@ abstract class PlaceOS::Resource(T)
     # Begin background processing
     spawn(same_thread: true) { watch_processing }
 
+    @startup_finished = true
+
     Fiber.yield
 
     self
@@ -83,6 +89,7 @@ abstract class PlaceOS::Resource(T)
 
   def stop : self
     event_channel.close
+    @startup_finished = false
     self
   end
 
