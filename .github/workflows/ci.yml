@@ -1,5 +1,5 @@
 name: CI
-on: [push, workflow_dispatch]
+on: [push]
 jobs:
   style:
     runs-on: ubuntu-latest
@@ -14,13 +14,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   test:
     runs-on: ubuntu-latest
+    name: 'crystal: ${{ matrix.crystal }}'
     strategy:
       fail-fast: false
       matrix:
+        stable: [true]
         crystal:
-        - latest
-        - nightly
-        - 1.0.0
+          - 1.0.0
+          - 1.1.1
+          - latest
+        include:
+          - crystal: nightly
+            stable: false
+    continue-on-error: ${{ !matrix.stable }}
     steps:
       - run: docker run -p 29015:29015 -p 28015:28015 -d rethinkdb:2.4
       - uses: actions/checkout@v2
