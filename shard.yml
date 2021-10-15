@@ -1,22 +1,22 @@
 name: placeos-resource
-version: 2.1.0
+version: 2.2.0
 crystal: ">= 1.0.0"
 
 dependencies:
   # Tuple based logs
   log_helper:
     github: spider-gazelle/log_helper
-    version: ~> 1
+    version: ~> 1.0
 
   # Simple async abstraction
   promise:
     github: spider-gazelle/promise
-    version: ~> 2
+    version: ~> 3.0
 
   # ORM for RethinkDB built on active-model
   rethinkdb-orm:
     github: spider-gazelle/rethinkdb-orm
-    version: ~> 5
+    version: ~> 5.0
 
   # Retriable blocks
   retriable:
