@@ -78,6 +78,27 @@ module PlaceOS
       end
     end
 
+    it "#on_reconnect", tags: "retry" do
+      Basic.new(name: UUID.random.to_s).save!
+      processor = Processor.new.start
+      processor.creates.size.should eq 1
+
+      RethinkORM::Connection.db.@sock.close rescue nil
+
+      # Retry until connection is up again
+      Retriable.retry do
+        begin
+          Basic.count
+        rescue
+          raise "retrying connection"
+        end
+      end
+
+      sleep 10.milliseconds
+
+      processor.reconnected?.should be_true
+    end
+
     it "reconnects if db connection is lost", tags: "retry" do
       create_name = UUID.random.to_s
       update_name = UUID.random.to_s
