@@ -20,6 +20,10 @@ jobs:
         include:
           - crystal: nightly
             stable: false
+            MT: false
+          - crystal: nightly
+            stable: false
+            MT: true
     services:
       rethink:
         image: rethinkdb:2.4
