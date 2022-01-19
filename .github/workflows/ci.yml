@@ -6,7 +6,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    name: 'crystal: ${{ matrix.crystal }}'
+    name: "${{ !matrix.stable && '🚧 ' || '' }}crystal: ${{ matrix.crystal }}, MT: ${{ matrix.MT && '☑' || '☐' }}"
     strategy:
       fail-fast: false
       matrix:
@@ -14,7 +14,9 @@ jobs:
         crystal:
           - 1.0.0
           - 1.1.1
-          - 1.2.0
+          - 1.2.2
+          - 1.3.1
+        MT: [true, false]
         include:
           - crystal: nightly
             stable: false
@@ -27,8 +29,8 @@ jobs:
     continue-on-error: ${{ !matrix.stable }}
     steps:
       - uses: actions/checkout@v2
-      - uses: oprypin/install-crystal@v1
+      - uses: crystal-lang/install-crystal@v1.6.0
         with:
           crystal: ${{ matrix.crystal }}
       - run: shards install --ignore-crystal-version
-      - run: crystal spec -v --error-trace
+      - run: crystal spec -v --error-trace ${{ matrix.MT && '-Dpreview_mt' || '' }} --order random
