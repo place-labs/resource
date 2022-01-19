@@ -18,6 +18,12 @@ class Processor < PlaceOS::Resource(Basic)
   getter updates = [] of String
   getter deletes = [] of String
 
+  property? reconnected = false
+
+  def on_reconnect
+    self.reconnected = true
+  end
+
   def process_resource(action : PlaceOS::Resource::Action, resource : Basic) : PlaceOS::Resource::Result
     case action
     in .created? then creates

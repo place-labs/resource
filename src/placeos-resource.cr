@@ -17,7 +17,7 @@ abstract class PlaceOS::Resource(T)
   record Error, name : String, reason : String do
     include JSON::Serializable
 
-    def initialize(name, reason)
+    def initialize(name : String?, reason : String?)
       @name = name || ""
       @reason = reason || ""
     end
@@ -57,6 +57,11 @@ abstract class PlaceOS::Resource(T)
 
   # Expose the status of whether the initial load of resources has completed.
   getter? startup_finished : Bool = false
+
+  # Callback called when changefeed is reconnected
+  def on_reconnect
+    # Noop
+  end
 
   abstract def process_resource(action : Action, resource : T) : Result
 
@@ -125,9 +130,26 @@ abstract class PlaceOS::Resource(T)
       handler: self.class.name,
     })
 
-    Retriable.retry(base_interval: 1.milliseconds, max_interval: 1.seconds) do
+    retried = false
+    on_retry = ->(_e : Exception, _n : Int32, _elapsed : Time::Span, _interval : Time::Span) {
+      retried = true
+    }
+
+    Retriable.retry(base_interval: 1.milliseconds, max_interval: 1.seconds, on_retry: on_retry) do
       begin
-        T.changes.each do |change|
+        changefeed = T.changes
+
+        if retried
+          begin
+            on_reconnect
+          rescue e
+            Log.error(exception: e) { "reconnection callback failed" }
+          end
+
+          retried = false
+        end
+
+        changefeed.each do |change|
           break if event_channel.closed?
 
           Log.trace { {message: "resource event", event: change.event.to_s.downcase, id: change.value.id} }
