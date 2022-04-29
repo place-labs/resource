@@ -1,40 +1,14 @@
 name: CI
-on: [push]
+on:
+  push:
+  schedule:
+    - cron: "0 0 * * 0" # Every Sunday at midnight
+
 jobs:
   style:
     uses: PlaceOS/.github/.github/workflows/crystal-style.yml@main
 
   test:
-    runs-on: ubuntu-latest
-    name: "${{ !matrix.stable && '🚧 ' || '' }}crystal: ${{ matrix.crystal }}, MT: ${{ matrix.MT && '☑' || '☐' }}"
-    strategy:
-      fail-fast: false
-      matrix:
-        stable: [true]
-        crystal:
-          - 1.0.0
-          - 1.1.1
-          - 1.2.2
-          - 1.3.1
-        MT: [true, false]
-        include:
-          - crystal: nightly
-            stable: false
-            MT: false
-          - crystal: nightly
-            stable: false
-            MT: true
-    services:
-      rethink:
-        image: rethinkdb:2.4
-        ports:
-          - 29015:29015
-          - 28015:28015
-    continue-on-error: ${{ !matrix.stable }}
-    steps:
-      - uses: actions/checkout@v2
-      - uses: crystal-lang/install-crystal@v1.6.0
-        with:
-          crystal: ${{ matrix.crystal }}
-      - run: shards install --ignore-crystal-version
-      - run: crystal spec -v --error-trace ${{ matrix.MT && '-Dpreview_mt' || '' }} --order random
+    uses: PlaceOS/.github/.github/workflows/containerised-test.yml@main
+    with:
+      cache_shards: false
