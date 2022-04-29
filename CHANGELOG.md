@@ -1,8 +1,12 @@
+## Unreleased
+
+## v2.3.1 (2022-03-09)
+
 ## v2.3.0 (2022-01-19)
 
 ### Feat
 
-- reconnect callback (#12)
+- reconnect callback ([#12](https://github.com/place-labs/resource/pull/12))
 
 ## v2.2.0 (2021-10-15)
 
@@ -62,6 +66,10 @@
 
 - allocate buffer the size of batches
 
+## v1.0.6 (2021-02-23)
+
+## v1.0.5 (2020-08-20)
+
 ## v1.0.4 (2020-08-20)
 
 ### Fix
@@ -79,6 +87,8 @@
 ### Fix
 
 - retry changefeed
+
+## v1.0.1 (2020-08-06)
 
 ## v1.0.0 (2020-07-17)
 
