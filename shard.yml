@@ -23,6 +23,10 @@ dependencies:
     github: Sija/retriable.cr
     version: ~> 0.2
 
+  # Conditional code generation
+  defined:
+    github: wyhaines/defined.cr
+
 development_dependencies:
   # Log backend
   action-controller:

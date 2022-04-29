@@ -1,3 +1,5 @@
+require "defined"
+
 # This allows opt-out of specific instrumentation at compile time, via environment variables.
 # Refer to https://wyhaines.github.io/defined.cr/ for details about all supported check types.
 unless_enabled?("OTEL_CRYSTAL_DISABLE_INSTRUMENTATION_PLACEOS_RESOURCE") do
