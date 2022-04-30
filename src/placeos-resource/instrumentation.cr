@@ -9,9 +9,6 @@ unless_enabled?("OTEL_CRYSTAL_DISABLE_INSTRUMENTATION_PLACEOS_RESOURCE") do
       end
     end
 
-    # There are two options here. The other is to monkeypath Lucky::RouteHandler#call
-    # directly, and inject code in it to create the span. This seems less invasive, and
-    # less fragile, but will be a bit slower since the find_action gets called twice.
     abstract class PlaceOS::Resource(T)
       trace("start") do
         trace = OpenTelemetry.trace
