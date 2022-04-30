@@ -5,6 +5,8 @@ require "promise"
 require "rethinkdb-orm"
 require "retriable"
 
+require "./placeos-resource/instrumentation"
+
 # Internally abstracts data event streams.
 #
 abstract class PlaceOS::Resource(T)
