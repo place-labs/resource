@@ -1,4 +1,8 @@
-## Unreleased
+## v2.4.0 (2022-04-30)
+
+### Feat
+
+- **instrumentation**: add OpenTelemetry to `PlaceOS::Resource` ([#14](https://github.com/place-labs/resource/pull/14))
 
 ## v2.3.1 (2022-03-09)
 
