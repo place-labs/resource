@@ -10,18 +10,20 @@ unless_enabled?("OTEL_CRYSTAL_DISABLE_INSTRUMENTATION_PLACEOS_RESOURCE") do
     end
 
     abstract class PlaceOS::Resource(T)
+      trace("load_resources") do
+        OpenTelemetry.trace.in_span("#{self.class.name} Load Resources") do
+          previous_def
+        end
+      end
+
       trace("start") do
-        trace = OpenTelemetry.trace
-        trace_name = "#{self.class.name} Start"
-        trace.in_span(trace_name) do
+        OpenTelemetry.trace.in_span("#{self.class.name} Start") do
           previous_def
         end
       end
 
       trace("_process_event") do
-        trace = OpenTelemetry.trace
-        trace_name = "#{self.class.name} Process Event"
-        trace.in_span(trace_name) do
+        OpenTelemetry.trace.in_span("#{self.class.name} Process Event") do
           previous_def
         end
       end
