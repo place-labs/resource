@@ -1,3 +1,9 @@
+## v2.5.0 (2022-05-02)
+
+### Feat
+
+- **instrumentation**: trace `load_resources`
+
 ## v2.4.0 (2022-04-30)
 
 ### Feat
