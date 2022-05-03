@@ -1,3 +1,9 @@
+## v2.5.2 (2022-05-03)
+
+### Fix
+
+- remove telemetry require
+
 ## v2.5.1 (2022-05-03)
 
 ### Fix
