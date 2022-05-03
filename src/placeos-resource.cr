@@ -5,8 +5,6 @@ require "promise"
 require "rethinkdb-orm"
 require "retriable"
 
-require "./placeos-resource/instrumentation"
-
 # Internally abstracts data event streams.
 #
 abstract class PlaceOS::Resource(T)
@@ -211,3 +209,5 @@ abstract class PlaceOS::Resource(T)
     Log.error(exception: e) { {message: "unexpected error while processing event", resource: event.resource.to_json} }
   end
 end
+
+require "./placeos-resource/instrumentation"
