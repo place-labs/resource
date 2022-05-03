@@ -1,3 +1,9 @@
+## v2.5.1 (2022-05-03)
+
+### Fix
+
+- require instrumentation last
+
 ## v2.5.0 (2022-05-02)
 
 ### Feat
