@@ -209,5 +209,3 @@ abstract class PlaceOS::Resource(T)
     Log.error(exception: e) { {message: "unexpected error while processing event", resource: event.resource.to_json} }
   end
 end
-
-require "./placeos-resource/instrumentation"
