@@ -1,3 +1,9 @@
+## v2.5.3 (2022-05-05)
+
+### Refactor
+
+- rename `instrumentation` to `telemetry`
+
 ## v2.5.2 (2022-05-03)
 
 ### Fix
