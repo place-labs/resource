@@ -1,3 +1,9 @@
+## v2.5.4 (2022-05-06)
+
+### Refactor
+
+- **telemetry**: instrument `process_resource` instead of `_process_resource`
+
 ## v2.5.3 (2022-05-05)
 
 ### Refactor
