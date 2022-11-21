@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/place-labs/resource/actions/workflows/ci.yml/badge.svg)](https://github.com/place-labs/resource/actions/workflows/ci.yml)
 
-Abstraction over [RethinkORM](https://github.com/spider-gazelle) changefeeds
+Abstraction over [PgORM](https://github.com/spider-gazelle/pg-orm) changefeeds
 
 ## Implementation
 
-`PlaceOS::Resource(T)` is a layer over `RethinkORM` models, providing an abstract interface to a table's changefeed.
+`PlaceOS::Resource(T)` is a layer over `PgORM` models, providing an abstract interface to a table's changefeed.
 
 ## `abstract def process_resource(action : Action, resource : T)`
 

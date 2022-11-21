@@ -1,29 +1,33 @@
 version: "3.7"
-
-# YAML Anchors
-
-x-rethinkdb-client-env: &rethinkdb-client-env
-  RETHINKDB_HOST: ${RETHINKDB_HOST:-rethink}
-  RETHINKDB_PORT: ${RETHINKDB_PORT:-28015}
-  RETHINKDB_DB: ${RETHINKDB_DB:-place_development}
-
 services:
+  postgres:
+    hostname: postgres
+    image: postgres:13-alpine
+    container_name: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: resource_spec
+    ports:
+      - "5432:5432"
   test:
-    image: placeos/service-spec-runner:${CRYSTAL_VERSION:-1.2.2}
+    image: placeos/service-spec-runner:${CRYSTAL_VERSION:-latest}
     volumes:
       - ${PWD}/spec:/app/spec
       - ${PWD}/src:/app/src
       - ${PWD}/lib:/app/lib
+      - ${PWD}/shard.lock:/app/shard.lock
       - ${PWD}/shard.override.yml:/app/shard.override.yml
-      - ${PWD}/shard.yml:/app/shard.yml
+      - ${PWD}/shard.yml:/app/shard.yml.input
       - ${PWD}/coverage:/app/coverage
     depends_on:
-      - rethink
+      - postgres
     environment:
       GITHUB_ACTION: ${GITHUB_ACTION:-}
-      <<: *rethinkdb-client-env
+      PG_DATABASE_URL: ${PG_DATABASE_URL:-postgresql://postgres:password@postgres:5432/resource_spec}
 
-  rethink:
-    image: rethinkdb:${RETHINKDB_VERSION:-2.4}
-    restart: always
-    hostname: rethink

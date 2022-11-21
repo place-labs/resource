@@ -2,15 +2,14 @@ require "deque"
 require "json"
 require "log_helper"
 require "promise"
-require "rethinkdb-orm"
-require "retriable"
+require "pg-orm"
 
 # Internally abstracts data event streams.
 #
 abstract class PlaceOS::Resource(T)
   Log = ::Log.for(self)
 
-  alias Action = RethinkORM::Changefeed::Event
+  alias Action = PgORM::ChangeReceiver::Event
 
   record Event(T), action : Action, resource : T
 
@@ -130,36 +129,18 @@ abstract class PlaceOS::Resource(T)
       handler: self.class.name,
     })
 
-    retried = false
-    on_retry = ->(_e : Exception, _n : Int32, _elapsed : Time::Span, _interval : Time::Span) {
-      retried = true
-    }
+    begin
+      changefeed = T.changes
+      changefeed.each do |change|
+        break if event_channel.closed?
 
-    Retriable.retry(base_interval: 1.milliseconds, max_interval: 1.seconds, on_retry: on_retry) do
-      begin
-        changefeed = T.changes
-
-        if retried
-          begin
-            on_reconnect
-          rescue e
-            Log.error(exception: e) { "reconnection callback failed" }
-          end
-
-          retried = false
-        end
-
-        changefeed.each do |change|
-          break if event_channel.closed?
-
-          Log.trace { {message: "resource event", event: change.event.to_s.downcase, id: change.value.id} }
-          event_channel.send(Event(T).new(change.event, change.value))
-        end
-        raise "Changefeed closed prematurely" unless event_channel.closed?
-      rescue e
-        Log.error { {message: "while watching resources", error: e.to_s} } unless e.is_a?(Channel::ClosedError)
-        raise e
+        Log.trace { {message: "resource event", event: change.event.to_s.downcase, id: change.value.id} }
+        event_channel.send(Event(T).new(change.event, change.value))
       end
+      raise "Changefeed closed prematurely" unless event_channel.closed?
+    rescue e
+      Log.error { {message: "while watching resources", error: e.to_s} } unless e.is_a?(Channel::ClosedError)
+      raise e
     end
   end
 
