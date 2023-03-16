@@ -8,14 +8,16 @@ module PlaceOS
     end
 
     describe "#startup_finished?", tags: "resource" do
-      Array(Basic).new(3) { Basic.new(name: UUID.random.to_s).save! }
-      processor = Processor.new
-      processor.startup_finished?.should be_false
-      processor.start
-      processor.creates.size.should eq(3)
-      processor.startup_finished?.should be_true
-      processor.stop
-      processor.startup_finished?.should be_false
+      it "test startup_finished?" do
+        Array(Basic).new(3) { Basic.new(name: UUID.random.to_s).save! }
+        processor = Processor.new
+        processor.startup_finished?.should be_false
+        processor.start
+        processor.creates.size.should eq(3)
+        processor.startup_finished?.should be_true
+        processor.stop
+        processor.startup_finished?.should be_false
+      end
     end
 
     describe "#start", tags: "resource" do
@@ -76,57 +78,6 @@ module PlaceOS
 
         processor.stop
       end
-    end
-
-    it "#on_reconnect", tags: "retry" do
-      Basic.new(name: UUID.random.to_s).save!
-      processor = Processor.new.start
-      processor.creates.size.should eq 1
-
-      RethinkORM::Connection.db.@sock.close rescue nil
-
-      # Retry until connection is up again
-      Retriable.retry do
-        begin
-          Basic.count
-        rescue
-          raise "retrying connection"
-        end
-      end
-
-      sleep 10.milliseconds
-
-      processor.reconnected?.should be_true
-    end
-
-    it "reconnects if db connection is lost", tags: "retry" do
-      create_name = UUID.random.to_s
-      update_name = UUID.random.to_s
-      model = Basic.new(name: create_name).save!
-      processor = Processor.new.start
-
-      processor.creates.size.should eq 1
-
-      RethinkORM::Connection.db.@sock.close rescue nil
-
-      # Retry until connection is up again
-      Retriable.retry do
-        begin
-          Basic.count
-        rescue
-          raise "retrying connection"
-        end
-      end
-
-      sleep 5.milliseconds
-
-      model.name = update_name
-      model.save!
-
-      sleep 1.milliseconds
-
-      processor.updates.size.should eq 1
-      processor.stop
     end
   end
 end

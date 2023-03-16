@@ -1,15 +1,22 @@
 require "spec"
 require "../src/placeos-resource"
-
 require "action-controller/logger"
-require "rethinkdb-orm"
 
 Spec.before_suite do
-  Basic.clear
-  Log.builder.bind("*", backend: ActionController.default_backend, level: Log::Severity::Debug)
+  PgORM::Database.parse(ENV["PG_DATABASE_URL"])
+  PgORM::Database.connection do |db|
+    db.exec "DROP TABLE IF EXISTS basic;"
+    db.exec <<-SQL
+    CREATE TABLE basic (
+      id BIGSERIAL NOT NULL PRIMARY KEY,
+      name TEXT NOT NULL
+    );
+    SQL
+  end
+  Log.builder.bind("*", backend: ActionController.default_backend, level: Log::Severity::Info)
 end
 
-class Basic < RethinkORM::Base
+class Basic < PgORM::Base
   attribute name : String
 end
 
