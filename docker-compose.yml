@@ -1,9 +1,7 @@
 version: "3.7"
 services:
   postgres:
-    hostname: postgres
     image: postgres:13-alpine
-    container_name: postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 30s
@@ -13,15 +11,13 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: resource_spec
-    ports:
-      - "5432:5432"
   test:
     image: placeos/service-spec-runner:${CRYSTAL_VERSION:-latest}
     volumes:
       - ${PWD}/spec:/app/spec
       - ${PWD}/src:/app/src
-      # - ${PWD}/lib:/app/lib
-      - ${PWD}/shard.lock:/app/shard.lock
+      - ${PWD}/lib:/app/lib
+      #- ${PWD}/shard.lock:/app/shard.lock
       - ${PWD}/shard.override.yml:/app/shard.override.yml
       - ${PWD}/shard.yml:/app/shard.yml.input
       - ${PWD}/coverage:/app/coverage
