@@ -1,4 +1,14 @@
-## Unreleased
+## v3.0.1 (2023-05-08)
+
+### Fix
+
+- resource should hint at changes ([#18](https://github.com/place-labs/resource/pull/18))
+
+## v3.0.0 (2023-03-16)
+
+### Refactor
+
+- migrate to postgresql ([#17](https://github.com/place-labs/resource/pull/17))
 
 ## v2.5.4 (2022-05-06)
 
@@ -63,13 +73,13 @@
 
 ## v2.0.4 (2021-07-15)
 
-### Refactor
-
-- less verbose message on `load_resource` finish
-
 ### Fix
 
 - **rethinkdb-orm**: bump orm
+
+### Refactor
+
+- less verbose message on `load_resource` finish
 
 ## v2.0.3 (2021-07-08)
 
@@ -90,13 +100,13 @@
 
 ## v1.2.1 (2021-04-13)
 
-### Fix
-
-- cause can be nillable
-
 ### Feat
 
 - **error**: add `cause` to `ProcessingError`
+
+### Fix
+
+- cause can be nillable
 
 ### Perf
 
