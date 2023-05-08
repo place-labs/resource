@@ -34,7 +34,9 @@ class Processor < PlaceOS::Resource(Basic)
   def process_resource(action : PlaceOS::Resource::Action, resource : Basic) : PlaceOS::Resource::Result
     case action
     in .created? then creates
-    in .updated? then updates
+    in .updated?
+      raise "no change detected!!" unless resource.name_changed?
+      updates
     in .deleted? then deletes
     end << resource.name
 

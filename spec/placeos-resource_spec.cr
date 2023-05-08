@@ -32,7 +32,7 @@ module PlaceOS
 
         models.each &.destroy
 
-        sleep 5.milliseconds
+        sleep 100.milliseconds
 
         processor.deletes.should be_empty
       end
@@ -47,7 +47,7 @@ module PlaceOS
         update_name = UUID.random.to_s
         model = Basic.new(name: create_name).save!
 
-        sleep 5.milliseconds
+        sleep 100.milliseconds
 
         processor.creates.size.should eq 1
         processor.updates.should be_empty
@@ -58,7 +58,7 @@ module PlaceOS
         model.name = update_name
         model.save!
 
-        sleep 5.milliseconds
+        sleep 100.milliseconds
 
         processor.creates.size.should eq 1
         processor.updates.size.should eq 1
@@ -68,7 +68,7 @@ module PlaceOS
 
         model.destroy
 
-        sleep 5.milliseconds
+        sleep 100.milliseconds
 
         processor.creates.size.should eq 1
         processor.updates.size.should eq 1
