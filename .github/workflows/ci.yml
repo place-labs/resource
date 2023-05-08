@@ -2,7 +2,7 @@ name: CI
 on:
   push:
   schedule:
-    - cron: "0 1 * * 0" # Every Sunday @ 1:00
+    - cron: "0 1 * * 0" # Every Sunday at 1:00
 
 jobs:
   style:
@@ -10,5 +10,3 @@ jobs:
 
   test:
     uses: PlaceOS/.github/.github/workflows/containerised-test.yml@main
-    with:
-      cache_shards: false
