@@ -27,7 +27,8 @@ services:
       - ${PWD}/coverage:/app/coverage
     depends_on:
       - postgres
+    security_opt:
+      - seccomp:unconfined
     environment:
       GITHUB_ACTION: ${GITHUB_ACTION:-}
       PG_DATABASE_URL: ${PG_DATABASE_URL:-postgresql://postgres:password@postgres:5432/resource_spec}
-
