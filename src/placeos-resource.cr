@@ -69,7 +69,9 @@ abstract class PlaceOS::Resource(T)
     @event_channel = Channel(Event(T)).new(channel_buffer_size)
   end
 
-  def start : self
+  LOAD_TIMEOUT = 30.seconds
+
+  def start(timeout : Time::Span = LOAD_TIMEOUT) : self
     processed.clear
     errors.clear
 
@@ -79,7 +81,7 @@ abstract class PlaceOS::Resource(T)
     spawn(same_thread: true) { watch_resources }
 
     # Load all the resources into a channel
-    load_resources
+    load_resources(timeout)
 
     # Begin background processing
     spawn(same_thread: true) { watch_processing }
@@ -99,7 +101,7 @@ abstract class PlaceOS::Resource(T)
 
   # Load all resources from the database, push into a channel
   #
-  private def load_resources : Int64
+  private def load_resources(timeout : Time::Span) : Int64
     count = Atomic(Int64).new(0)
     waiting = Array(Promise::DeferredPromise(Nil)).new(channel_buffer_size)
     T.all.in_groups_of(channel_buffer_size, reuse: true) do |resources|
@@ -112,7 +114,13 @@ abstract class PlaceOS::Resource(T)
           nil
         end
       end
-      Promise.all(waiting).get
+      promise = Promise.all(waiting)
+      begin
+        Promise.timeout(promise, timeout)
+      rescue ::Promise::Timeout
+        Log.warn { "timeout loading resources: #{resources.inspect}" }
+        sleep timeout / 3
+      end
       waiting.clear
     end
 
