@@ -1,3 +1,9 @@
+## Unreleased
+
+### Fix
+
+- add timeout to resource loading ([#19](https://github.com/place-labs/resource/pull/19))
+
 ## v3.0.1 (2023-05-08)
 
 ### Fix
