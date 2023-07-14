@@ -64,14 +64,11 @@ abstract class PlaceOS::Resource(T)
 
   abstract def process_resource(action : Action, resource : T) : Result
 
-  macro inherited
-    @changefeed : T::ChangeFeed(T)
-  end
+  @change_close : Proc(Nil)? = nil
 
   def initialize(@processed_buffer_size : Int32 = 64, @channel_buffer_size : Int32 = 64)
     @processed = Deque(Event(T)).new(processed_buffer_size)
     @event_channel = Channel(Event(T)).new(channel_buffer_size)
-    @changefeed = T.changes
   end
 
   LOAD_TIMEOUT = 30.seconds
@@ -82,8 +79,11 @@ abstract class PlaceOS::Resource(T)
 
     @event_channel = Channel(Event(T)).new(channel_buffer_size) if event_channel.closed?
 
+    changefeed = T.changes
+    @change_close = ->{ changefeed.stop }
+
     # Listen for changes on the resource table
-    spawn(same_thread: true) { watch_resources }
+    spawn(same_thread: true) { watch_resources(changefeed) }
 
     # Load all the resources into a channel
     load_resources(timeout)
@@ -99,8 +99,8 @@ abstract class PlaceOS::Resource(T)
   end
 
   def stop : self
+    @change_close.try &.call
     event_channel.close
-    @changefeed.stop
     @startup_finished = false
     self
   end
@@ -137,14 +137,14 @@ abstract class PlaceOS::Resource(T)
 
   # Listen to changes on the resource table
   #
-  private def watch_resources
+  private def watch_resources(changefeed)
     Log.context.set({
       type:    T.name,
       handler: self.class.name,
     })
 
     begin
-      @changefeed.on do |change|
+      changefeed.on do |change|
         Log.trace { {message: "resource event", event: change.event.to_s.downcase, id: change.value.id} }
         event_channel.send(Event(T).new(change.event, change.value))
       end
