@@ -152,13 +152,16 @@ abstract class PlaceOS::Resource(T)
     end
   end
 
+  private def _spawn_event(event)
+    spawn(same_thread: true) { _process_event(event) }
+    Fiber.yield
+  end
+
   # Consumes resources ready for processing
   #
   private def watch_processing
     loop do
-      event = event_channel.receive
-      spawn(same_thread: true) { _process_event(event) }
-      Fiber.yield
+      _spawn_event(event_channel.receive)
     end
   rescue e
     unless e.is_a?(Channel::ClosedError)
