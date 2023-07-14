@@ -64,9 +64,14 @@ abstract class PlaceOS::Resource(T)
 
   abstract def process_resource(action : Action, resource : T) : Result
 
+  macro inherited
+    @changefeed : T::ChangeFeed(T)
+  end
+
   def initialize(@processed_buffer_size : Int32 = 64, @channel_buffer_size : Int32 = 64)
     @processed = Deque(Event(T)).new(processed_buffer_size)
     @event_channel = Channel(Event(T)).new(channel_buffer_size)
+    @changefeed = T.changes
   end
 
   LOAD_TIMEOUT = 30.seconds
@@ -95,6 +100,7 @@ abstract class PlaceOS::Resource(T)
 
   def stop : self
     event_channel.close
+    @changefeed.stop
     @startup_finished = false
     self
   end
@@ -138,14 +144,10 @@ abstract class PlaceOS::Resource(T)
     })
 
     begin
-      changefeed = T.changes
-      changefeed.each do |change|
-        break if event_channel.closed?
-
+      @changefeed.on do |change|
         Log.trace { {message: "resource event", event: change.event.to_s.downcase, id: change.value.id} }
         event_channel.send(Event(T).new(change.event, change.value))
       end
-      raise "Changefeed closed prematurely" unless event_channel.closed?
     rescue e
       Log.error { {message: "while watching resources", error: e.to_s} } unless e.is_a?(Channel::ClosedError)
       raise e

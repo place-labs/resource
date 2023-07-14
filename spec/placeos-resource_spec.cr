@@ -5,7 +5,7 @@ module PlaceOS
   describe Resource do
     before_each do
       Basic.clear
-      sleep 0.1
+      sleep 0.2
     end
 
     describe "#startup_finished?", tags: "resource" do
@@ -39,14 +39,13 @@ module PlaceOS
       end
 
       it "received changes on resource via Model ChangeFeed" do
-        count = 100
+        count = 1000
         changefeed = Basic.changes
         chan = Channel(Nil).new
         received = 0
         spawn do
           changefeed.on do |_change|
             received += 1
-            sleep 0.2
             chan.send(nil) if received == count
           end
         end
@@ -60,7 +59,7 @@ module PlaceOS
       end
 
       it "should receive all changes on resources" do
-        count = 50
+        count = 1000
         processor = Processor.new.start
         processor.creates.should be_empty
         sleep 0.2
