@@ -1,4 +1,10 @@
-## Unreleased
+## v3.0.3 (2023-07-14)
+
+### Fix
+
+- **placeos-resource**: Fix missing change events
+
+## v3.0.2 (2023-07-11)
 
 ### Fix
 
