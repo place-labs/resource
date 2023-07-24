@@ -110,7 +110,7 @@ abstract class PlaceOS::Resource(T)
   private def load_resources(timeout : Time::Span) : Int64
     count = Atomic(Int64).new(0)
     waiting = Array(Promise::DeferredPromise(Nil)).new(channel_buffer_size)
-    T.all.in_groups_of(channel_buffer_size, reuse: true) do |resources|
+    T.order(id: :asc).all.in_groups_of(channel_buffer_size, reuse: true) do |resources|
       resources.each do |resource|
         next unless resource
         event = Event.new(action: Action::Created, resource: resource)
