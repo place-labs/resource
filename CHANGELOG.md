@@ -1,3 +1,9 @@
+## v3.1.0 (2023-07-24)
+
+### Feat
+
+- load resources in order of creation
+
 ## v3.0.5 (2023-07-14)
 
 ### Fix
