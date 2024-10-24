@@ -83,13 +83,13 @@ abstract class PlaceOS::Resource(T)
     @change_close = ->{ changefeed.stop }
 
     # Listen for changes on the resource table
-    spawn(same_thread: true) { watch_resources(changefeed) }
+    spawn { watch_resources(changefeed) }
 
     # Load all the resources into a channel
     load_resources(timeout)
 
     # Begin background processing
-    spawn(same_thread: true) { watch_processing }
+    spawn { watch_processing }
 
     @startup_finished = true
 
@@ -114,7 +114,7 @@ abstract class PlaceOS::Resource(T)
       resources.each do |resource|
         next unless resource
         event = Event.new(action: Action::Created, resource: resource)
-        waiting << Promise.defer(same_thread: true) do
+        waiting << Promise.defer do
           count.add(1)
           _process_event(event)
           nil
@@ -155,7 +155,7 @@ abstract class PlaceOS::Resource(T)
   end
 
   private def _spawn_event(event)
-    spawn(same_thread: true) { _process_event(event) }
+    spawn { _process_event(event) }
     Fiber.yield
   end
 

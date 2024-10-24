@@ -5,7 +5,7 @@ module PlaceOS
   describe Resource do
     before_each do
       Basic.clear
-      sleep 0.2
+      sleep 200.milliseconds
     end
 
     describe "#startup_finished?", tags: "resource" do
@@ -62,10 +62,10 @@ module PlaceOS
         count = 1000
         processor = Processor.new.start
         processor.creates.should be_empty
-        sleep 0.2
+        sleep 200.milliseconds
         models = Array(Basic).new(count) { |i| Basic.new(name: "test-#{i + 1}") }
         models.each(&.save!)
-        sleep 0.2
+        sleep 200.milliseconds
         processor.creates.size.should eq(count)
         processor.stop
       end
