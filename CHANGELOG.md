@@ -1,3 +1,11 @@
+## Unreleased
+
+### Fix
+
+- **Log**: set IDs to string to handle UUIDs and complex primary keys
+
+## v3.1.1 (2024-10-24)
+
 ## v3.1.0 (2023-07-24)
 
 ### Feat
