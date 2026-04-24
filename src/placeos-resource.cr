@@ -145,7 +145,7 @@ abstract class PlaceOS::Resource(T)
 
     begin
       changefeed.on do |change|
-        Log.trace { {message: "resource event", event: change.event.to_s.downcase, id: change.value.id} }
+        Log.trace { {message: "resource event", event: change.event.to_s.downcase, id: change.value.id.to_s} }
         event_channel.send(Event(T).new(change.event, change.value))
       end
     rescue e
@@ -179,7 +179,7 @@ abstract class PlaceOS::Resource(T)
       type:    T.name,
       handler: self.class.name,
       action:  event.action.to_s,
-      id:      event.resource.id,
+      id:      event.resource.id.to_s,
     })
 
     Log.trace { "processing event" }
