@@ -81,7 +81,7 @@ abstract class PlaceOS::Resource(T)
     @event_channel = Channel(Event(T)).new(channel_buffer_size) if event_channel.closed?
 
     changefeed = T.changes
-    @change_close = ->{ changefeed.stop }
+    @change_close = -> { changefeed.stop }
 
     # Listen for changes on the resource table
     spawn { watch_resources(changefeed) }
