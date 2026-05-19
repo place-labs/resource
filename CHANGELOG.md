@@ -2,6 +2,12 @@
 
 ### Fix
 
+- possible infinite recursion watching resources
+
+## v3.1.2 (2026-04-24)
+
+### Fix
+
 - **Log**: set IDs to string to handle UUIDs and complex primary keys
 
 ## v3.1.1 (2024-10-24)
