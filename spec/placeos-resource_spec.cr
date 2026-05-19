@@ -70,6 +70,41 @@ module PlaceOS
         processor.stop
       end
 
+      it "survives consecutive raises in the dispatch loop without recursing", tags: "resource" do
+        # Regression: `watch_processing` previously rescued errors by recursively
+        # calling itself, growing the fiber stack on every raise until overflow.
+        # The fix wraps the loop in `SimpleRetry` with a 1s max backoff.
+        processor = FaultyProcessor.new
+        processor.fault_quota = 5
+        processor.start
+
+        # First model is consumed by an injected fault.
+        # `_spawn_event` raises before `_process_event` runs.
+        # After `fault_quota` faults the loop keeps draining the channel.
+        names = Array(String).new(processor.fault_quota + 1) { UUID.random.to_s }
+        names.each do |name|
+          Basic.new(name: name).save!
+          # Give the worker fiber a chance to drain between writes so the
+          # injected faults align with the first few events.
+          sleep 50.milliseconds
+        end
+
+        # Allow the final non-faulting event to complete (worst-case backoff
+        # after 5 faults: 10+20+40+80+160 = 310ms, plus processing slack).
+        sleep 1.second
+
+        processor.faults_emitted.get.should eq(processor.fault_quota)
+        processor.creates.size.should be >= 1
+        # The worker fiber is still alive and processing — the very next event
+        # also gets through.
+        followup = UUID.random.to_s
+        Basic.new(name: followup).save!
+        sleep 300.milliseconds
+        processor.creates.should contain(followup)
+
+        processor.stop
+      end
+
       it "listens for changes on resources" do
         processor = Processor.new.start
         processor.creates.should be_empty

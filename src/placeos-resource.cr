@@ -3,6 +3,7 @@ require "json"
 require "log_helper"
 require "promise"
 require "pg-orm"
+require "simple_retry"
 
 # Internally abstracts data event streams.
 #
@@ -161,15 +162,23 @@ abstract class PlaceOS::Resource(T)
 
   # Consumes resources ready for processing
   #
+  # Wraps the dispatch loop in `SimpleRetry` so a spurious raise (e.g. a fiber
+  # spawn failing under load) backs off and recovers instead of growing the
+  # fiber stack via self-recursion. `Channel::ClosedError` propagates through
+  # the retry so a normal `stop` exits cleanly.
   private def watch_processing
-    loop do
-      _spawn_event(event_channel.receive)
+    SimpleRetry.try_to(
+      base_interval: 10.milliseconds,
+      max_interval: 1.second,
+      raise_on: Channel::ClosedError,
+    ) do |_attempt, last_error, _retry_in|
+      Log.error(exception: last_error) { "error while consuming resource event queue, retrying" } if last_error
+      loop do
+        _spawn_event(event_channel.receive)
+      end
     end
-  rescue e
-    unless e.is_a?(Channel::ClosedError)
-      Log.error(exception: e) { "error while consuming resource event queue" }
-      watch_processing
-    end
+  rescue Channel::ClosedError
+    # event_channel closed via #stop — exit the fiber cleanly
   end
 
   # Process the event, place into the processed buffer

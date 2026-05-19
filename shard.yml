@@ -1,5 +1,5 @@
 name: placeos-resource
-version: 3.1.2
+version: 3.1.3
 crystal: ">= 1.0.0"
 
 dependencies:
@@ -16,6 +16,10 @@ dependencies:
   # ORM for Postgres built on active-model
   pg-orm:
     github: spider-gazelle/pg-orm
+
+  # Retry with exponential backoff
+  simple_retry:
+    github: spider-gazelle/simple_retry
 
 development_dependencies:
   # Log backend
