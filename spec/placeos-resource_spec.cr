@@ -38,6 +38,18 @@ module PlaceOS
         processor.deletes.should be_empty
       end
 
+      # more than one page, ending part way through one
+      it "loads every resource once when there are several pages" do
+        names = Array(String).new(150) { |i| "page-#{i}" }
+        names.each { |name| Basic.new(name: name).save! }
+
+        processor = Processor.new
+        processor.start
+        processor.creates.sort.should eq names.sort
+
+        processor.stop
+      end
+
       it "received changes on resource via Model ChangeFeed" do
         count = 1000
         changefeed = Basic.changes

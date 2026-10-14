@@ -111,9 +111,8 @@ abstract class PlaceOS::Resource(T)
   private def load_resources(timeout : Time::Span) : Int64
     count = Atomic(Int64).new(0)
     waiting = Array(Promise::DeferredPromise(Nil)).new(channel_buffer_size)
-    T.order(id: :asc).all.in_groups_of(channel_buffer_size, reuse: true) do |resources|
+    each_page(channel_buffer_size) do |resources|
       resources.each do |resource|
-        next unless resource
         event = Event.new(action: Action::Created, resource: resource)
         waiting << Promise.defer do
           count.add(1)
@@ -134,6 +133,26 @@ abstract class PlaceOS::Resource(T)
     total = count.get
     Log.info { {message: "loaded #{total}", type: T.name, handler: self.class.name} }
     total
+  end
+
+  # Yields the table a page at a time, in primary key order.
+  #
+  # NOTE:: paged by key rather than by offset. An `OFFSET` makes the database
+  # walk every row before the page, so loading a table of n rows walked about
+  # n² / (2 * size) of them: slow to start on large tables, and in every
+  # service at once after a restart
+  private def each_page(size : Int32, &) : Nil
+    last_id = nil
+    loop do
+      query = T.order(id: :asc)
+      query = query.where("id > ?", last_id) unless last_id.nil?
+      page = query.limit(size).to_a
+      break if page.empty?
+      yield page
+      break if page.size < size
+      last_id = page.last.id
+      break if last_id.nil?
+    end
   end
 
   # Listen to changes on the resource table
